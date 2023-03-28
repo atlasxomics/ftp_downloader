@@ -2,7 +2,7 @@
 
 import subprocess
 
-from typing import Optional, Union
+from typing import Optional
 
 from latch import medium_task, workflow
 from latch.types import (
@@ -20,7 +20,7 @@ def ftp_task(
     password: str,
     host: str,
     port: str,
-    url: str,
+    url: str = None,
 ) -> LatchDir:
     
     if url:
@@ -37,7 +37,7 @@ def ftp_task(
             "wget",
             "-c",
             "-r",
-            f"ftp://{user}:{password}@{host}:{port}/path",
+            f"ftp://{user}:{password}@{host}:{port}/",
             "-P",
             f"/root/{out_dir}"           
         ]
@@ -96,9 +96,9 @@ def ftp_download(
     out_dir: str,
     user: str,
     password: str,
+    url: Optional[str],
     host: str = "usftp21.novogene.com",
     port: str = "21",
-    url: Optional[str] = None
 ) -> LatchDir:
     
     return ftp_task(
