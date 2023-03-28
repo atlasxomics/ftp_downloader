@@ -1,49 +1,111 @@
-"""
-Minimal template workflow to show the structure of a Latch workflow
+"""Simple workflow for downloading files via FTP."""
 
-For a more comprehensive example, see the assemble_and_sort workflow
-For examples on how to use the Latch SDK, see https://docs.latch.bio/examples/workflows_examples.html
-"""
+import subprocess
 
-from wf.task import task
+from typing import Optional, Union
 
-from latch import workflow
+from latch import medium_task, workflow
 from latch.types import (
     LatchAuthor,
     LatchFile,
+    LatchDir,
     LatchMetadata,
-    LatchOutputDir,
     LatchParameter,
 )
 
-"""Minimal metadata object - fill in fields with your own values"""
+@medium_task
+def ftp_task(
+    out_dir: str,
+    user: str,
+    password: str,
+    host: str,
+    port: str,
+    url: str,
+) -> LatchDir:
+    
+    if url:
+        _ftp_cmd = [
+            "wget",
+            "-c",
+            "-r",
+            url,
+            "-P",
+            f"/root/{out_dir}"
+        ]
+    else:
+        _ftp_cmd = [
+            "wget",
+            "-c",
+            "-r",
+            f"ftp://{user}:{password}@{host}:{port}/path",
+            "-P",
+            f"/root/{out_dir}"           
+        ]
+    
+    subprocess.run(_ftp_cmd)
+
+    return LatchDir(f'/root/{out_dir}', f'latch:///ftp/{out_dir}')
+    
 metadata = LatchMetadata(
-    display_name="CHANGE ME",
-    documentation="CHANGE ME",
+    display_name="ftp downloader",
     author=LatchAuthor(
-        name="CHANGE ME",
-        email="CHANGE ME",
-        github="CHANGE ME",
+        name="James McaGann",
+        email="jpaulmcgann@gmail.com",
+        github="https://github.com/jpmcga",
     ),
-    repository="CHANGE ME",
-    license="CHANGE ME",
+    repository="https://github.com/jpmcga/ftp_downloader",
+    license="MIT",
     parameters={
-        "input_file": LatchParameter(
-            display_name="Input File",
-            batch_table_column=True,  # Show this parameter in batched mode.
+        "out_dir": LatchParameter(
+            display_name="output directory",
+            description="Name of Latch subdirectory for downloaded file; files \
+                will be saved to /ftp/{output directory}.",
+            batch_table_column=True,
         ),
-        "output_directory": LatchParameter(
-            display_name="Output Directory",
-            batch_table_column=True,  # Show this parameter in batched mode.
+        "user": LatchParameter(
+            display_name="user/batch id",
+            description="User ID or Batch ID (Novogene) for FTP download.",
+            batch_table_column=True,
         ),
+        "password": LatchParameter(
+            display_name="password",
+            description="Password for FTP download.",
+            batch_table_column=True,
+        ),
+        "host": LatchParameter(
+            display_name="host",
+            description="Name of FTP host server.",
+            batch_table_column=True,
+        ),
+        "port" : LatchParameter(
+            display_name="port",
+            description="Port to be used for FTP download.",
+            batch_table_column=True,   
+        ),
+        "url" : LatchParameter(
+            display_name="url",
+            description="Full url for FTP download; takes precedence",
+            batch_table_column=True,
+        )
     },
     tags=[],
 )
 
-
-# change the name of this function to something more descriptive
 @workflow(metadata)
-def latch_workflow(
-    input_file: LatchFile, output_directory: LatchOutputDir
-) -> LatchFile:
-    return task(input_file=input_file, output_directory=output_directory)
+def ftp_download(
+    out_dir: str,
+    user: str,
+    password: str,
+    host: str = "usftp21.novogene.com",
+    port: str = "21",
+    url: Optional[str] = None
+) -> LatchDir:
+    
+    return ftp_task(
+        out_dir=out_dir,
+        user=user,
+        password=password,
+        host=host,
+        port=port,
+        url=url
+    )
