@@ -70,7 +70,7 @@ metadata = LatchMetadata(
         "out_dir": LatchParameter(
             display_name="output directory",
             description="Name of Latch subdirectory for downloaded file; files \
-                will be saved to /ftp/{output directory}.",
+                will be saved to /downloads/{output directory}.",
             batch_table_column=True,
         ),
         "source_url": LatchParameter(
@@ -87,5 +87,26 @@ def ftp_download(
     out_dir: str,
     source_url: Union[Ftp_url, str]
 ) -> LatchDir:
+    """Simple workflow for downloading files via FTP.
+    Downloader for FTP or other
+    ----
+    Simple Latch UI for downloading files directly into Latch Console.
+
+    Allows downloads with either FTP parameters or download url.
+
+    Files are saved in the specified output directory in latch:///downloads/outdir.
+
+    FTP will download recursively with url format:
+    ```
+    ftp://user:password@host:port/
+    ```
+    Providing full url will download recurively for directories, once for files.
+
+    Tested with ftp and https downloads; interally just calling
+    ```
+    wget -c  -r <link> -P <output>
+    ```
+    so idk should work with most download urls.
+"""
     
     return ftp_task(out_dir=out_dir, source_url=source_url)
