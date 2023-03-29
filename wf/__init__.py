@@ -20,8 +20,8 @@ from latch.types import (
 class Ftp_url:
     user: str
     password: str
-    host: str
-    port: str = 21
+    host: str = "usftp21.novogene.com"
+    port: str = "21"
 
 @medium_task
 def ftp_task(
