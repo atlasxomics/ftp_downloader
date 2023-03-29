@@ -55,7 +55,7 @@ def ftp_task(
     
     subprocess.run(_ftp_cmd)
 
-    return LatchDir(f'/root/{out_dir}', f'latch:///ftp/{out_dir}')
+    return LatchDir(f'/root/{out_dir}', f'latch:///downloads/{out_dir}')
     
 metadata = LatchMetadata(
     display_name="ftp downloader",
