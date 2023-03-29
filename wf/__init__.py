@@ -2,7 +2,9 @@
 
 import subprocess
 
-from typing import Optional
+from dataclasses import dataclass
+from dataclasses_json import dataclass_json
+from typing import Optional, Union
 
 from latch import medium_task, workflow
 from latch.types import (
@@ -13,34 +15,43 @@ from latch.types import (
     LatchParameter,
 )
 
+@dataclass_json
+@dataclass
+class Ftp_url:
+    user: str
+    password: str
+    host: str
+    port: str = 21
+
 @medium_task
 def ftp_task(
     out_dir: str,
-    user: str,
-    password: str,
-    host: str,
-    port: str,
-    url: str = None,
+    source_url: Union[Ftp_url, str]
 ) -> LatchDir:
     
-    if url:
+    if type(source_url) == str:
         _ftp_cmd = [
             "wget",
             "-c",
             "-r",
-            url,
+            source_url,
             "-P",
             f"/root/{out_dir}"
         ]
-    else:
+    elif type(source_url) == Ftp_url:
         _ftp_cmd = [
             "wget",
             "-c",
             "-r",
-            f"ftp://{user}:{password}@{host}:{port}/",
+            (f"ftp://{source_url.user}:"
+            f"{source_url.password}@"
+            f"{source_url.host}:"
+            f"{source_url.port}/"),
             "-P",
             f"/root/{out_dir}"           
         ]
+    else:
+        raise Exception("Download url incorrect format; please check url.") 
     
     subprocess.run(_ftp_cmd)
 
@@ -62,30 +73,10 @@ metadata = LatchMetadata(
                 will be saved to /ftp/{output directory}.",
             batch_table_column=True,
         ),
-        "user": LatchParameter(
-            display_name="user/batch id",
-            description="User ID or Batch ID (Novogene) for FTP download.",
-            batch_table_column=True,
-        ),
-        "password": LatchParameter(
-            display_name="password",
-            description="Password for FTP download.",
-            batch_table_column=True,
-        ),
-        "host": LatchParameter(
-            display_name="host",
-            description="Name of FTP host server.",
-            batch_table_column=True,
-        ),
-        "port" : LatchParameter(
-            display_name="port",
-            description="Port to be used for FTP download.",
-            batch_table_column=True,   
-        ),
-        "url" : LatchParameter(
-            display_name="url",
-            description="Full url for FTP download; takes precedence",
-            batch_table_column=True,
+        "source_url": LatchParameter(
+            display_name="download url",
+            description="Ftp parameters or single url for download.",
+            batch_table_column=True
         )
     },
     tags=[],
@@ -94,18 +85,7 @@ metadata = LatchMetadata(
 @workflow(metadata)
 def ftp_download(
     out_dir: str,
-    user: str,
-    password: str,
-    url: Optional[str],
-    host: str = "usftp21.novogene.com",
-    port: str = "21",
+    source_url: Union[Ftp_url, str]
 ) -> LatchDir:
     
-    return ftp_task(
-        out_dir=out_dir,
-        user=user,
-        password=password,
-        host=host,
-        port=port,
-        url=url
-    )
+    return ftp_task(out_dir=out_dir, source_url=source_url)
