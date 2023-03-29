@@ -24,7 +24,7 @@ class Ftp_url:
     port: str = "21"
 
 @medium_task
-def ftp_task(
+def download_task(
     out_dir: str,
     source_url: Union[Ftp_url, str]
 ) -> LatchDir:
