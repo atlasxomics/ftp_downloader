@@ -109,4 +109,4 @@ def ftp_download(
     so idk should work with most download urls.
 """
     
-    return ftp_task(out_dir=out_dir, source_url=source_url)
+    return download_task(out_dir=out_dir, source_url=source_url)
