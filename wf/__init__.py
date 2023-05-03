@@ -9,10 +9,10 @@ from typing import Optional, Union
 from latch import medium_task, workflow
 from latch.types import (
     LatchAuthor,
-    LatchFile,
     LatchDir,
     LatchMetadata,
     LatchParameter,
+    LatchRule
 )
 
 @dataclass_json
@@ -72,6 +72,12 @@ metadata = LatchMetadata(
             description="Name of Latch subdirectory for downloaded file; files \
                 will be saved to /downloads/{output directory}.",
             batch_table_column=True,
+            rules=[
+                LatchRule(
+                    regex="^[^/].*",
+                    message="output directory cannot start with a '/'"
+                )
+            ]
         ),
         "source_url": LatchParameter(
             display_name="download url",
