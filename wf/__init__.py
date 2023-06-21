@@ -4,7 +4,7 @@ import subprocess
 
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
-from typing import Optional, Union
+from typing import Union
 
 from latch import medium_task, workflow
 from latch.types import (
@@ -60,11 +60,11 @@ def download_task(
 metadata = LatchMetadata(
     display_name="ftp downloader",
     author=LatchAuthor(
-        name="James McaGann",
-        email="jpaulmcgann@gmail.com",
-        github="https://github.com/jpmcga",
+        name="AtlasXomics, Inc.",
+        email="jamesm@atlasxomics.com",
+        github="https://github.com/atlasxomics",
     ),
-    repository="https://github.com/jpmcga/ftp_downloader",
+    repository="https://github.com/atlasxomics/ftp_downloader",
     license="MIT",
     parameters={
         "out_dir": LatchParameter(
@@ -112,7 +112,7 @@ def ftp_download(
     ```
     wget -c  -r <link> -P <output>
     ```
-    so idk should work with most download urls.
+    so should work with most download urls.
 """
     
     return download_task(out_dir=out_dir, source_url=source_url)

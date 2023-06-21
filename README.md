@@ -17,4 +17,4 @@ Tested with ftp and https downloads; interally just calling
 ```
 wget -c -r <link> -P <output>
 ```
-so idk should work with most download urls.
+so should work with most download urls.
