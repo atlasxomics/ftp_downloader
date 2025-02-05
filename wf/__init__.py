@@ -1,6 +1,7 @@
 """Simple workflow for downloading files via FTP."""
 
 import subprocess
+import logging
 
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
@@ -15,6 +16,11 @@ from latch.types import (
     LatchRule
 )
 
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 @dataclass_json
 @dataclass
@@ -32,14 +38,22 @@ def download_task(
 ) -> LatchDir:
 
     if type(source_url) is str:
-        _ftp_cmd = [
-            "wget",
-            "-c",
-            "-r",
-            source_url,
-            "-P",
-            f"/root/{out_dir}"
-        ]
+        if source_url.startswith("lftp -c"):
+            logging.info("Using lftp for download.")
+            _ftp_cmd = [
+                source_url.rstrip("'"),
+                f"/ /root/{out_dir}'"
+            ]
+            
+        else:
+            _ftp_cmd = [
+                "wget",
+                "-c",
+                "-r",
+                source_url,
+                "-P",
+                f"/root/{out_dir}"
+            ]
     elif type(source_url) is Ftp_url:
         _ftp_cmd = [
             "wget",
@@ -54,7 +68,7 @@ def download_task(
         ]
     else:
         raise Exception("Download url incorrect format; please check url.")
-
+    logging.info(f"Running command: {' '.join(_ftp_cmd)}")
     subprocess.run(_ftp_cmd)
 
     return LatchDir(f'/root/{out_dir}', f'latch:///downloads/{out_dir}')
