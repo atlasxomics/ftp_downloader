@@ -15,6 +15,7 @@ from latch.types import (
     LatchRule
 )
 
+
 @dataclass_json
 @dataclass
 class Ftp_url:
@@ -23,13 +24,14 @@ class Ftp_url:
     host: str = "usftp21.novogene.com"
     port: str = "21"
 
+
 @medium_task
 def download_task(
     out_dir: str,
     source_url: Union[Ftp_url, str]
 ) -> LatchDir:
-    
-    if type(source_url) == str:
+
+    if type(source_url) is str:
         _ftp_cmd = [
             "wget",
             "-c",
@@ -38,7 +40,7 @@ def download_task(
             "-P",
             f"/root/{out_dir}"
         ]
-    elif type(source_url) == Ftp_url:
+    elif type(source_url) is Ftp_url:
         _ftp_cmd = [
             "wget",
             "-c",
@@ -48,15 +50,16 @@ def download_task(
             f"{source_url.host}:"
             f"{source_url.port}/"),
             "-P",
-            f"/root/{out_dir}"           
+            f"/root/{out_dir}"
         ]
     else:
-        raise Exception("Download url incorrect format; please check url.") 
-    
+        raise Exception("Download url incorrect format; please check url.")
+
     subprocess.run(_ftp_cmd)
 
     return LatchDir(f'/root/{out_dir}', f'latch:///downloads/{out_dir}')
-    
+
+
 metadata = LatchMetadata(
     display_name="ftp downloader",
     author=LatchAuthor(
@@ -69,8 +72,8 @@ metadata = LatchMetadata(
     parameters={
         "out_dir": LatchParameter(
             display_name="output directory",
-            description="Name of Latch subdirectory for downloaded file; files \
-                will be saved to /downloads/{output directory}.",
+            description="Name of Latch subdirectory for downloaded file; \
+                files will be saved to /downloads/{output directory}.",
             batch_table_column=True,
             rules=[
                 LatchRule(
@@ -88,6 +91,7 @@ metadata = LatchMetadata(
     tags=[],
 )
 
+
 @workflow(metadata)
 def ftp_download(
     out_dir: str,
@@ -100,19 +104,21 @@ def ftp_download(
 
     Allows downloads with either FTP parameters or download url.
 
-    Files are saved in the specified output directory in latch:///downloads/outdir.
+    Files are saved in the specified output directory in
+    latch:///downloads/outdir.
 
     FTP will download recursively with url format:
     ```
     ftp://user:password@host:port/
     ```
-    Providing full url will download recurively for directories, once for files.
+    Providing full url will download recurively for directories, once for
+    files.
 
     Tested with ftp and https downloads; interally just calling
     ```
     wget -c  -r <link> -P <output>
     ```
     so should work with most download urls.
-"""
-    
+    """
+
     return download_task(out_dir=out_dir, source_url=source_url)
