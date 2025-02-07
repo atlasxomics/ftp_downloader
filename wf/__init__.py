@@ -2,12 +2,13 @@
 
 import subprocess
 import logging
-
+import re
+import shlex
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from typing import Union
-
-from latch import medium_task, workflow
+from latch.executions import rename_current_execution
+from latch import medium_task, workflow, custom_task
 from latch.types import (
     LatchAuthor,
     LatchDir,
@@ -31,20 +32,43 @@ class Ftp_url:
     port: str = "21"
 
 
-@medium_task
+@custom_task(cpu=12, memory=64, storage_gib=1024)
 def download_task(
     out_dir: str,
     source_url: Union[Ftp_url, str]
 ) -> LatchDir:
+    logging.info(f"Attempting to set execution name to: {out_dir}")
+    try:
+        rename_current_execution(str(out_dir))
+        logging.info("SUCCESS")
+    except:
+        logging.info("FAILED to rename")
 
     if type(source_url) is str:
         if source_url.startswith("lftp -c"):
             logging.info("Using lftp for download.")
-            _ftp_cmd = [
-                source_url.rstrip("'"),
-                f"/ /root/{out_dir}'"
-            ]
-            
+
+            # set permissionon shell script
+            subprocess.run(["chmod", "+x", "/root/wf/scripts/parallel_sftp.sh"])
+
+            # make out_dir
+            subprocess.run(["mkdir", "-p", f"/root/{out_dir}"])
+            # Parse the SFTP URL
+            pattern = r'sftp://([^:]+):([^@]+)@([^:]+):(\d+)'
+            match = re.search(pattern, source_url)
+            if match:
+                username, password, host, port = match.groups()
+
+                # Build the command for our shell script
+                _ftp_cmd = f'/root/wf/scripts/parallel_sftp.sh -u "{username}" -p "{password}" -h "{host}" -P "{port}" -j 8 -r "01.RawData" -l "/root/{out_dir}"'
+
+                # Print the command (for verification)
+                print(f"Generated command: {_ftp_cmd}")
+                useShell = True
+            else:
+                raise Exception(
+                    "Download url incorrect format; please check url.")
+
         else:
             _ftp_cmd = [
                 "wget",
@@ -54,6 +78,7 @@ def download_task(
                 "-P",
                 f"/root/{out_dir}"
             ]
+            useShell = False
     elif type(source_url) is Ftp_url:
         _ftp_cmd = [
             "wget",
@@ -66,10 +91,11 @@ def download_task(
             "-P",
             f"/root/{out_dir}"
         ]
+        useShell = False
     else:
         raise Exception("Download url incorrect format; please check url.")
-    logging.info(f"Running command: {' '.join(_ftp_cmd)}")
-    subprocess.run(_ftp_cmd)
+    logging.info(f"Running command: {_ftp_cmd}")
+    subprocess.run(_ftp_cmd, shell=useShell)
 
     return LatchDir(f'/root/{out_dir}', f'latch:///downloads/{out_dir}')
 
