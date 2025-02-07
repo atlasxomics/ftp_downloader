@@ -32,7 +32,7 @@ class Ftp_url:
     port: str = "21"
 
 
-@custom_task(cpu=12, memory=64, storage_gib=1024)
+@custom_task(cpu=12, memory=64, storage_gib=2000)
 def download_task(
     out_dir: str,
     source_url: Union[Ftp_url, str]
