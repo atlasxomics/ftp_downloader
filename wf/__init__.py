@@ -54,10 +54,13 @@ def download_task(
             # make out_dir
             subprocess.run(["mkdir", "-p", f"/root/{out_dir}"])
             # Parse the SFTP URL
-            pattern = r'sftp://([^:]+):([^@]+)@([^:]+):(\d+)'
+            pattern = r'sftp://([^:]+):([^@]+)@([^:;]+)(?::(\d+))?'
             match = re.search(pattern, source_url)
             if match:
                 username, password, host, port = match.groups()
+
+                if port is None or port == "":
+                    port = "3022"
 
                 # Build the command for our shell script
                 _ftp_cmd = f'/root/wf/scripts/parallel_sftp.sh -u "{username}" -p "{password}" -h "{host}" -P "{port}" -j 8 -r "01.RawData" -l "/root/{out_dir}"'
